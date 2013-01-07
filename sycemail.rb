@@ -79,16 +79,26 @@ def print_statistics(valid_counter, invalid_counter, infile, valid_file_name, in
     puts "   invalid emails written to: #{invalid_file_name}"
     if note
         puts
-        puts "Note"
-        puts "----"
+        puts "-> Note"
+        puts "   ----"
         puts note
     end
 end
 
 def fix(email) 
-    return email if EMAIL_PATTERN.match(email)
-    puts "-> fix: #{email}"
-    gets.chomp || email
+    #return email if EMAIL_PATTERN.match(email)
+    
+    choice = email
+
+    while not EMAIL_PATTERN.match(choice)
+        puts "-> fix: #{email}"
+        choice = gets.chomp
+        if choice.empty?
+            return email
+        end
+    end
+    
+    return choice
 end
 
 def fix_emails(infile, delimiter, valid_file_name, invalid_file_name)
@@ -149,8 +159,8 @@ def separate_emails(infile, delimiter, valid_file_name, invalid_file_name)
                      infile,
                      valid_file_name, 
                      invalid_file_name,
-                     "You can fix invalid emails and append to valid with:\n"+
-                     "$ fixmail -f #{invalid_file_name} -o #{valid_file_name}" 
+                     "   You can fix invalid emails and append to valid with:\n"+
+                     "   $ fixmail -f #{invalid_file_name} -o #{valid_file_name}" 
 end
 
 
