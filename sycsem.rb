@@ -1,7 +1,6 @@
 #!/usr/bin/env ruby
 
 require_relative 'pattern.rb'
-#EMAIL_PATTERN = /\A[\w!#\$%&'*+\/=?`{|}~^-]+(?:\.[\w!#\$%&'*+\/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+[a-zA-Z]{2,6}\Z/
 
 inputfile = ARGV.shift
 separator = ARGV.shift || ";"
