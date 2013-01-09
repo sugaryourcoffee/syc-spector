@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 
 require 'optparse'
+require 'io/wait'
+
 require_relative 'pattern.rb'
 
 timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
@@ -97,18 +99,65 @@ def print_statistics(valid_counter, invalid_counter, infile, valid_file_name, in
     end
 end
 
+Signal.trap("INT") do
+    puts "-> program terminated by user"
+    exit
+end
+
+def char_if_pressed
+    begin
+        system("stty raw -echo")
+        c = nil
+        if $stdin.ready?
+            c = $stdin.getc
+        end
+        c.chr if c
+    ensure
+        system "stty -raw echo"
+    end
+end
+
+def prompt(choice_line)
+    pattern = /(?<=\()./
+    choices = choice_line.scan(pattern)
+
+    choice = nil
+
+    while choices.find_index(choice).nil?
+        print choice_line 
+        choice = nil
+        choice = char_if_pressed while choice == nil
+        puts
+    end
+
+    choice
+end
+
 def fix(email) 
     choice = email
+    result = {}
 
     while not EMAIL_PATTERN.match(choice)
-        puts "-> fix: #{email}"
-        choice = gets.chomp
-        if choice.empty?
-            return email
+        puts "-> #{choice}?"
+        result[:answer] = prompt "-> (v)alid (i)nvalid (f)ix (s)kip: "
+        case result[:answer]
+        when 'v'
+            result[:value] = choice
+            break
+        when 'i'
+            result[:value] = choice
+            break
+        when 'f'
+            print "-> fix: "
+            choice = gets.chomp
+            print "-> confirm "
+            redo
+        when 's'
+            break
         end
     end
     
-    return choice
+    return result
 end
 
 def fix_emails(infile, delimiter, valid_file_name, invalid_file_name)
@@ -118,17 +167,27 @@ def fix_emails(infile, delimiter, valid_file_name, invalid_file_name)
     invalid_file = File.open(invalid_file_name, 'w')
     invalid_counter = 0
 
+    skip_counter = 0
+
     File.open(infile, 'r') do |file|
         while line = file.gets do
             line.chomp.split("#{delimiter}").each do |email|
-                email = fix email
                 if EMAIL_PATTERN.match(email)
                     valid_file.puts email
                     valid_counter += 1
                 else
-                    invalid_file.puts email
-                    invalid_counter += 1
-                    puts "-> invalid: #{email} - added to invalid emails"
+                    result = fix email
+                    case result[:answer]
+                    when 'v'
+                       valid_counter += 1
+                       valid_file.puts result[:value]
+                    when 'i'
+                       invalid_counter += 1
+                       invalid_file.puts result[:value]
+                    when 'q'
+                       skip_counter += 1
+                       break 
+                    end
                 end
             end
         end
@@ -152,12 +211,15 @@ def separate_emails(infile, delimiter, valid_file_name, invalid_file_name)
     File.open(infile, 'r') do |file|
         while line = file.gets
             line.chomp.split("#{delimiter}").each do |email|
-                if EMAIL_PATTERN.match(email.chomp)
-                    valid_file.puts email
-                    valid_counter += 1
-                else
+                emails = email.scan(ANY_EMAIL_PATTERN)
+                if emails.empty?
                     invalid_file.puts email
                     invalid_counter += 1
+                else
+                    emails.each do |email|
+                        valid_file.puts email
+                        valid_counter += 1
+                    end
                 end
             end
         end
