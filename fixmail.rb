@@ -5,6 +5,15 @@ require 'io/wait'
 
 require_relative 'pattern.rb'
 
+def get_file_from_history(type)
+  pattern = Regexp.new('_'+type.to_s)
+  File.open(".fixmail.files", 'r') do |file|
+    while name = file.gets.chop
+      return name unless name.scan(pattern).empty?
+    end
+  end
+end
+
 def create_output_files(filename)
   timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
   if filename =~ /\d{8}-\d{6}/
@@ -41,7 +50,7 @@ option_parser = OptionParser.new do |opts|
 
     options[:mode] = 'w'
     opts.on("-a", "--append",
-            "Append values to output file") do
+            "Append values to output file OUTFILE") do
         options[:mode] = 'a'
     end
     
@@ -50,34 +59,19 @@ option_parser = OptionParser.new do |opts|
     options[:pattern] = /\A.*\Z/
     options[:scan_pattern] = /\A.*\Z/
 
-    opts.on("-m", "--match PATTERN",
+    opts.on("-p", "--pattern PATTERN",
             "Values that match the pattern are",
-            "considered as valid values",
+            "considered as valid values.",
             "Default matches all.",
-            "'fixmail.rb' -m email matches emails") do |pattern|
-
+            "'fixmail.rb' -p email matches emails") do |pattern|
       if pattern == 'email'
         options[:pattern] = EMAIL_PATTERN
         options[:scan_pattern] = ANY_EMAIL_PATTERN
       else
         options[:pattern] = Regexp.new(pattern)
+        options[:scan_pattern] = 
+                          Regexp.new(pattern.match(FULL_LINE).to_s || pattern)
       end
-    end
-
-    opts.on("-p", "--part PATTERN",
-            "The part pattern is especially used in",
-            "the fix (-f) mode. This is usefull in",
-            "case the match (-m)pattern matches only",
-            "whole lines (example: \A\w.*\d\Z) and the",
-            "input file contains lines that has in one",
-            "line two or more valid values. Than in fix",
-            "mode these values can be scanned") do |pattern|
-        if pattern == 'email'
-            options[:pattern] = EMAIL_PATTERN
-            options[:scan_pattern] = ANY_EMAIL_PATTERN
-        else
-            options[:scan_pattern] = Regexp.new(pattern)
-        end
     end
     
     options[:delimiter] = ";"
@@ -105,7 +99,7 @@ option_parser = OptionParser.new do |opts|
       options[:show] = show || :valid
       
       unless File.exists?(".fixmail.files")
-        puts "--> no files saved yet - exiting"
+        STDERR.puts "--> no files saved yet"
         exit(0)
       end
       
@@ -123,11 +117,17 @@ option_parser = OptionParser.new do |opts|
         if options[:fix] and ARGV.empty?
 
           files = {}
-          File.open(".fixmail.files", 'r') do |file|
-            files = create_output_files file.gets.chomp            
-            ARGV << file.gets.chomp
-            options[:pattern] = Regexp.new(file.gets.chomp)
-            options[:scan_pattern] = Regexp.new(file.gets.chomp)
+          if File.exist?(".fixmail.files")
+            File.open(".fixmail.files", 'r') do |file|
+              files = create_output_files file.gets.chomp            
+              ARGV << file.gets.chomp
+              options[:pattern] = Regexp.new(file.gets.chomp)
+              options[:scan_pattern] = Regexp.new(file.gets.chomp)
+            end
+          else
+            STDERR.puts "--> no fixmail history.\n" +
+                        "    You first have to run fixmail.rb FILENAME"
+            exit(-1)
           end
 
           unless files.empty?
@@ -136,11 +136,25 @@ option_parser = OptionParser.new do |opts|
           end
           
         end
+        
+       if options[:show] and ARGV.empty?
+          unless File.exist?(".fixmail.files")
+            STDERR.puts "--> no fixmail history." +
+                        "    You first have to run 'fixmail.rb FILENAME'"
+            exit(-1)
+          end
+          ARGV << (get_file_from_history options[:show])
+        end
 
         options[:infile] = ARGV.shift
         
-        if options[:infile].nil? and options[:show].nil? 
-          STDERR.puts "missing input file \n", opts
+        if options[:infile].nil?
+          STDERR.puts "--> missing input file"
+          exit(-1)
+        end
+
+        unless File.exist?(options[:infile])
+          STDERR.puts "--> infile '#{options[:infile]}' does not exist"
           exit(-1)
         end
         
@@ -185,9 +199,9 @@ def print_statistics(opts)
     puts
     puts "-> files operated on"
     puts "   -----------------"
-    puts "   emails read from:          #{opts[:infile]}"
-    puts "   valid emails written to:   #{opts[:valid_file]}"
-    puts "   invalid emails written to: #{opts[:invalid_file]}"
+    puts "   values read from:          #{opts[:infile]}"
+    puts "   valid values written to:   #{opts[:valid_file]}"
+    puts "   invalid values written to: #{opts[:invalid_file]}"
     if opts[:note]
         puts
         puts "-> Note"
@@ -230,8 +244,8 @@ def prompt(choice_line)
     choice
 end
 
-def fix(email, pattern) 
-    choice = email
+def fix(value, pattern) 
+    choice = value
     result = {}
 
     while not pattern.match(choice)
@@ -250,10 +264,10 @@ def fix(email, pattern)
             print "-> confirm "
             redo
         when 'd'
-            result[:value] = email
+            result[:value] = value
             break
         when 's'
-            result[:value] = email
+            result[:value] = value
             break
         end
     end
@@ -261,57 +275,7 @@ def fix(email, pattern)
     return result
 end
 
-def add_value_if_not_present(valid_values, value)
-    valid_values << value unless valid_values.find_index value
-end
-
-def fix_values(opts, value)
-    if (opts[:fix])
-    end
-end
-
-def fix_emails(infile, delimiter, valid_file_name, invalid_file_name)
-    valid_file = File.open(valid_file_name, 'a')
-    valid_counter = 0
-
-    invalid_file = File.open(invalid_file_name, 'w')
-    invalid_counter = 0
-
-    skip_counter = 0
-
-    File.open(infile, 'r') do |file|
-        while line = file.gets do
-            line.chomp.split("#{delimiter}").each do |email|
-                if EMAIL_PATTERN.match(email)
-                    valid_file.puts email
-                    valid_counter += 1
-                else
-                    result = fix email
-                    case result[:answer]
-                    when 'v'
-                       valid_counter += 1
-                       valid_file.puts result[:value]
-                    when 'i'
-                       invalid_counter += 1
-                       invalid_file.puts result[:value]
-                    when 's'
-                       skip_counter += 1
-                       break 
-                    end
-                end
-            end
-        end
-    end
-    valid_file.close
-    invalid_file.close
-    print_statistics valid_counter, 
-                     invalid_counter,
-                     infile,
-                     valid_file_name,
-                     invalid_file_name
-end
-                
-def separate_emails(opts) 
+def separate_values(opts) 
     valid_file = File.open(opts[:valid_file], opts[:mode])
     valid_values = []
 
@@ -322,12 +286,12 @@ def separate_emails(opts)
 
     File.open(opts[:infile], 'r') do |file|
         while line = file.gets
-            line.chomp.split(opts[:delimiter]).each do |email|
+            line.chomp.split(opts[:delimiter]).each do |value|
                 
-                match = email.match(opts[:pattern])
+                match = value.match(opts[:pattern])
                 if match.nil? 
                   if opts[:fix]
-                    result = fix email, opts[:pattern] 
+                    result = fix value, opts[:pattern] 
                     case result[:answer]
                     when 'v'
                        valid_values << result[:value]
@@ -336,15 +300,15 @@ def separate_emails(opts)
                     when 'd'
                        skip_counter += 1
                     when 's'
-                      email.scan(opts[:scan_pattern]).each do |value|
+                      value.scan(opts[:scan_pattern]).each do |value|
                         valid_values << value
                       end
                     end
                   else
-                    invalid_values << email
+                    invalid_values << value
                   end
                 else
-                  valid_values << email
+                  valid_values << value
                 end
             end
         end
@@ -397,11 +361,12 @@ def show(options)
 end
 
 if options[:infile]
-  separate_emails options 
+  separate_values options 
   print_statistics options
   save_result_files options
 end
 
 if options[:show]
-  show options
+#  show options
+  system "less #{get_file_from_history options[:show]}"
 end
