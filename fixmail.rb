@@ -5,7 +5,15 @@ require 'io/wait'
 
 require_relative 'pattern.rb'
 
-timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
+def create_output_files(filename)
+  timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
+  if filename =~ /\d{8}-\d{6}/
+    `cp #{filename} #{filename.sub(/\d{8}-\d{6}/, timestamp)}`
+    filename.slice!(/\d{8}-\d{6}_(valid|invalid)_/)
+  end
+  files = {valid_file: "#{timestamp}_valid_#{filename}",
+           invalid_file: "#{timestamp}_invalid_#{filename}"}
+end
 
 options = {}
 option_parser = OptionParser.new do |opts|
@@ -15,13 +23,13 @@ option_parser = OptionParser.new do |opts|
 
     options[:individualize] = false
     opts.on("-i", "--individualize",
-            "Removes duplicate entries") do
+            "Remove duplicate values") do
         options[:individualize] = true
     end
 
     options[:sort] = false
     opts.on("-s", "--sort",
-            "Sort the values") do
+            "Sort values") do
         options[:sort] = true
     end
 
@@ -33,7 +41,7 @@ option_parser = OptionParser.new do |opts|
 
     options[:mode] = 'w'
     opts.on("-a", "--append",
-            "Appends the values to the output file") do
+            "Append values to output file") do
         options[:mode] = 'a'
     end
     
@@ -41,49 +49,58 @@ option_parser = OptionParser.new do |opts|
 
     options[:pattern] = /\A.*\Z/
     options[:scan_pattern] = /\A.*\Z/
-    opts.on("-p", "--pattern PATTERN,SCAN_PATTERN", 
-            "Values that match the patterns are considered ",
-            "as valid values. Default pattern matches all values",
-            "Predifined pattern 'email' matches emails") do |pattern|
-      puts pattern
-      puts pattern.size
-      patterns = pattern.split(',')
-      puts patterns.size
-        if patterns[0] == 'email'
+
+    opts.on("-m", "--match PATTERN",
+            "Values that match the pattern are",
+            "considered as valid values",
+            "Default matches all.",
+            "'fixmail.rb' -m email matches emails") do |pattern|
+
+      if pattern == 'email'
+        options[:pattern] = EMAIL_PATTERN
+        options[:scan_pattern] = ANY_EMAIL_PATTERN
+      else
+        options[:pattern] = Regexp.new(pattern)
+      end
+    end
+
+    opts.on("-p", "--part PATTERN",
+            "The part pattern is especially used in",
+            "the fix (-f) mode. This is usefull in",
+            "case the match (-m)pattern matches only",
+            "whole lines (example: \A\w.*\d\Z) and the",
+            "input file contains lines that has in one",
+            "line two or more valid values. Than in fix",
+            "mode these values can be scanned") do |pattern|
+        if pattern == 'email'
             options[:pattern] = EMAIL_PATTERN
             options[:scan_pattern] = ANY_EMAIL_PATTERN
         else
-            options[:pattern] = Regexp.new(patterns[0])
-            if patterns[1]
-              options[:scan_pattern] = Regexp.new(patterns[1])
-            else
-              options[:scan_pattern] = options[:pattern]
-            end
+            options[:scan_pattern] = Regexp.new(pattern)
         end
     end
     
     options[:delimiter] = ";"
     opts.on("-d", "--delimiter DELIMITER", String, 
-            "Delimiter between email addresses, default ';'") do |delimiter|
+            "Delimiter between values.",
+            "Default delimiter is ';'") do |delimiter|
         options[:delimiter] = delimiter || ";"
     end
 
-    options[:valid_file] = timestamp + "_valid_values"
-    options[:invalid_file] = timestamp + "_invalid_values"
     opts.on("-o", "--output OUTFILE", String,
-            "File name as basis for creation of valid and invalid file name,",
-            "default '<timestamp>_valid_values, <timestamp>_invalid_values'",
+            "File name as basis for creation of valid",
+            "and invalid file name.",
+            "default '<timestamp>_valid_values,",
+            "<timestamp>_invalid_values'",
             "where <timestamp> = 'YYmmDD-HHMMSS'") do |outfile|
-        if outfile =~ /\d{8}-\d{6}/
-            copy = `cp #{outfile} #{outfile.sub(/\d{8}-\d{6}/, timestamp)}`
-            outfile.slice!(/\d{8}-\d{6}_(valid|invalid)_/)
-        end
-        options[:valid_file] = timestamp + "_valid_" + outfile
-        options[:invalid_file] = timestamp + "_invalid_" + outfile
+
+        files = create_output_files outfile
+        options[:valid_file] = files[:valid_file]
+        options[:invalid_file] = files[:invalid_file]
     end
 
     opts.on("--show [valid|invalid]", [:valid, :invalid],
-            "Shows the last valid or invalid file",
+            "Show the last valid or invalid file",
             "Default is valid") do |show|
       options[:show] = show || :valid
       
@@ -92,7 +109,7 @@ option_parser = OptionParser.new do |opts|
         exit(0)
       end
       
-   end
+    end
     
     opts.on("-h", "--help", "Show this message") do
         puts opts
@@ -103,12 +120,35 @@ option_parser = OptionParser.new do |opts|
         ARGV << "-h" if ARGV.empty?
         opts.parse!(ARGV)
         
-        if ARGV.empty? and not options[:show]
-            STDERR.puts "missing input file \n", opts
-            exit(-1)
+        if options[:fix] and ARGV.empty?
+
+          files = {}
+          File.open(".fixmail.files", 'r') do |file|
+            files = create_output_files file.gets.chomp            
+            ARGV << file.gets.chomp
+            options[:pattern] = Regexp.new(file.gets.chomp)
+            options[:scan_pattern] = Regexp.new(file.gets.chomp)
+          end
+
+          unless files.empty?
+            options[:valid_file] = files[:valid_file]
+            options[:invalid_file] = files[:invalid_file]
+          end
+          
         end
 
         options[:infile] = ARGV.shift
+        
+        if options[:infile].nil? and options[:show].nil? 
+          STDERR.puts "missing input file \n", opts
+          exit(-1)
+        end
+        
+        if options[:valid_file].nil? or options[:invalid_file].nil?
+          files = create_output_files "values"
+          options[:valid_file] = files[:valid_file]
+          options[:invalid_file] = files[:invalid_file]
+        end
 
     rescue OptionParser::ParseError => e
         STDERR.puts e.message, "\n", opts
@@ -122,6 +162,8 @@ def save_result_files(opts)
   File.open(".fixmail.files", 'w') do |file|
     file.puts opts[:valid_file]
     file.puts opts[:invalid_file]
+    file.puts opts[:pattern].to_s
+    file.puts opts[:scan_pattern].to_s
   end
 end
 
@@ -135,7 +177,7 @@ def print_statistics(opts)
                        opts[:double_counter],
            "   valid", opts[:valid_counter],
            "   invalid", opts[:invalid_counter],
-           "   skip", opts[:skip_counter],
+           "   drop", opts[:skip_counter],
            "   double", opts[:double_counter])
     puts
     puts "-> pattern:      #{opts[:pattern].inspect}"
@@ -338,9 +380,7 @@ def separate_emails(opts)
     opts[:double_counter] = double_counter
     if (invalid_values.size > 0 and not opts[:fix])
         opts[:note] = "   You can fix invalid values and append " + 
-                      "to valid with:\n"+
-                      "   $ fixmail -f #{opts[:invalid_file]} " +
-                      "-o #{opts[:valid_file]}" 
+                      "to valid with: $ fixmail.rb -fa"
     end
 
 end
@@ -350,14 +390,10 @@ def show(options)
       File.open(".fixmail.files", 'r') do |file|
         while name = file.gets
           unless name.scan(pattern).empty?
-            content = `less #{name}`
-            puts content
+            system "less #{name}"
           end
-          puts name.scan(pattern).empty?
-          puts name
         end
       end
-  puts pattern.inspect
 end
 
 if options[:infile]
