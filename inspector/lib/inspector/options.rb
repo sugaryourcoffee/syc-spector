@@ -21,6 +21,17 @@ module Inspector
       end
     end
 
+    def save_result_files(opts)
+      File.open(".fixmail.files", 'w') do |file|
+        file.puts opts[:valid_file]
+        file.puts opts[:invalid_file]
+        file.puts opts[:pattern].to_s
+        file.puts opts[:scan_pattern].to_s
+      end
+    end
+
+  private
+
     def create_output_files(filename)
       timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
       if filename =~ /\d{8}-\d{6}/
@@ -30,9 +41,7 @@ module Inspector
       files = {valid_file: "#{timestamp}_valid_#{filename}",
                invalid_file: "#{timestamp}_invalid_#{filename}"}
     end
-
-  private
-
+ 
     def parse(argv)
       @options = {}
       OptionParser.new do |opts|
