@@ -82,6 +82,7 @@ module Inspector
           line.chomp.split(opts[:delimiter]).each do |value|
               
             match = value.match(opts[:pattern])
+
             if match.nil? 
               if opts[:fix]
                 result = fix value, opts[:pattern] 
@@ -101,7 +102,7 @@ module Inspector
                 invalid_values << value
               end
             else
-              valid_values << value
+              valid_values << match
             end
           end
         end
@@ -137,7 +138,7 @@ module Inspector
       opts[:double_counter] = double_counter
       if (invalid_values.size > 0 and not opts[:fix])
         opts[:note] = "   You can fix invalid values and append " + 
-                      "to valid with: $ fixmail.rb -fa"
+                      "to valid with: $ sycspector -fa"
       end
 
     end

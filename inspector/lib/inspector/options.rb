@@ -14,7 +14,7 @@ module Inspector
 
     def get_file_from_history(type)
       pattern = Regexp.new('_'+type.to_s)
-      File.open(".fixmail.files", 'r') do |file|
+      File.open(".sycspector.data", 'r') do |file|
         while name = file.gets.chop
           return name unless name.scan(pattern).empty?
         end
@@ -22,7 +22,7 @@ module Inspector
     end
 
     def save_result_files(opts)
-      File.open(".fixmail.files", 'w') do |file|
+      File.open(".sycspector.data", 'w') do |file|
         file.puts opts[:valid_file]
         file.puts opts[:invalid_file]
         file.puts opts[:pattern].to_s
@@ -45,7 +45,7 @@ module Inspector
     def parse(argv)
       @options = {}
       OptionParser.new do |opts|
-        opts.banner = "Usage: fixmail.rb input_file [ @options ]"
+        opts.banner = "Usage: sycspector input_file [ options ]"
 
         # create a switch
 
@@ -82,14 +82,16 @@ module Inspector
                 "Values that match the pattern are",
                 "considered as valid values.",
                 "Default matches all.",
-                "'fixmail.rb' -p email matches emails") do |pattern|
+                "'sycspector' -p email matches emails") do |pattern|
           if pattern == 'email'
             @options[:pattern] = EMAIL_PATTERN
             @options[:scan_pattern] = ANY_EMAIL_PATTERN
           else
             @options[:pattern] = Regexp.new(pattern)
-            @options[:scan_pattern] = 
-              Regexp.new(pattern.match(FULL_LINE).to_s || pattern)
+            scan_pattern = pattern.match(FULL_LINE).to_s
+            puts "'#{scan_pattern}' '#{pattern}'"
+            pattern = scan_pattern unless scan_pattern.empty?
+            @options[:scan_pattern] = Regexp.new(pattern)
           end
         end
         
@@ -116,12 +118,7 @@ module Inspector
                 "Show the last valid or invalid file",
                 "Default is valid") do |show|
           @options[:show] = show || :valid
-          
-          unless File.exists?(".fixmail.files")
-            STDERR.puts "--> no files saved yet"
-            exit(0)
-          end
-          
+         
         end
         
         opts.on("-h", "--help", "Show this message") do
@@ -141,16 +138,16 @@ module Inspector
         if @options[:fix] and argv.empty?
 
           files = {}
-          if File.exist?(".fixmail.files")
-            File.open(".fixmail.files", 'r') do |file|
+          if File.exist?(".sycspector.data")
+            File.open(".sycspector.data", 'r') do |file|
               files = create_output_files file.gets.chomp            
               argv << file.gets.chomp
               @options[:pattern] = Regexp.new(file.gets.chomp)
               @options[:scan_pattern] = Regexp.new(file.gets.chomp)
             end
           else
-            STDERR.puts "--> no fixmail history.\n" +
-                        "    You first have to run fixmail.rb FILENAME"
+            STDERR.puts "--> no sycspector history.\n" +
+                        "    You first have to run sycspector FILENAME"
             exit(-1)
           end
 
@@ -162,32 +159,30 @@ module Inspector
         end
         
         if @options[:show] and argv.empty?
-          unless File.exist?(".fixmail.files")
-            STDERR.puts "--> no fixmail history." +
-                        "    You first have to run 'fixmail.rb FILENAME'"
+          unless File.exist?(".sycspector.data")
+            STDERR.puts "--> no sycspector history." +
+                        "    You first have to run 'sycspector FILENAME'"
             exit(-1)
           end
-          argv << (get_file_from_history @options[:show])
-        end
+        else
+          @options[:infile] = argv.shift
+          
+          if @options[:infile].nil?
+            STDERR.puts "--> missing input file"
+            exit(-1)
+          end
 
-        @options[:infile] = argv.shift
-        
-        if @options[:infile].nil?
-          STDERR.puts "--> missing input file"
-          exit(-1)
+          unless File.exist?(@options[:infile])
+            STDERR.puts "--> infile '#{@options[:infile]}' does not exist"
+            exit(-1)
+          end
+          
+          if @options[:valid_file].nil? or @options[:invalid_file].nil?
+            files = create_output_files "values"
+            @options[:valid_file] = files[:valid_file]
+            @options[:invalid_file] = files[:invalid_file]
+          end
         end
-
-        unless File.exist?(@options[:infile])
-          STDERR.puts "--> infile '#{@options[:infile]}' does not exist"
-          exit(-1)
-        end
-        
-        if @options[:valid_file].nil? or @options[:invalid_file].nil?
-          files = create_output_files "values"
-          @options[:valid_file] = files[:valid_file]
-          @options[:invalid_file] = files[:invalid_file]
-        end
-
       end
     end
   end

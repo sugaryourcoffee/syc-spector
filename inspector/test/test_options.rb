@@ -33,7 +33,7 @@ class TestOptions < Test::Unit::TestCase
         file.puts "pierre@thesugars.de"
         file.puts "amanda@thesugars.de und pierre@thesugars.de"
       end
-      File.open('.fixmail.files', 'w') do |file|
+      File.open('.sycspector.data', 'w') do |file|
         file.puts "20130113-121212_valid_values"
         file.puts "20130113-121212_invalid_values"
         file.puts "(?-mix:\A[\w!#\$%&'*+\/=?`{|}~^-]+" +
@@ -57,7 +57,7 @@ class TestOptions < Test::Unit::TestCase
       puts "in shutdown"
       `rm existing`
       `rm 20130113-*`
-      `rm .fixmail.files`
+      `rm .sycspector.data`
     end
  
     should "return inputfile" do
@@ -87,21 +87,21 @@ class TestOptions < Test::Unit::TestCase
       assert_equal true, opts.options[:individualize]
     end
 
-    should "return show and valid file as input file from history" do
+    should "return show :valid and infile nil" do
       opts = Inspector::Options.new(["--show"])
       assert_equal :valid, opts.options[:show]
-      assert_equal "20130113-121212_valid_values", opts.options[:infile]
+      assert_equal nil, opts.options[:infile]
       opts = Inspector::Options.new(["--show", "valid"])
-      assert_equal "20130113-121212_valid_values", opts.options[:infile]
+      assert_equal nil, opts.options[:infile]
     end
 
-    should "return show and invalid file as input file from history" do
+    should "return show :invalid and infile nil" do
       opts = Inspector::Options.new(["--show", "invalid"])
       assert_equal :invalid, opts.options[:show]
-      assert_equal "20130113-121212_invalid_values", opts.options[:infile]
+      assert_equal nil, opts.options[:infile]
     end
 
-    should "return fix and valid file as input file from last invokation" do
+    should "return fix and invalid file as input file from last invokation" do
       opts = Inspector::Options.new(["-f"])
       assert_equal true, opts.options[:fix]
       assert_equal "20130113-121212_invalid_values", opts.options[:infile]

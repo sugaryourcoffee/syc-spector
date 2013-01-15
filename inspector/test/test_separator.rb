@@ -94,6 +94,11 @@ class TestSeparator < Test::Unit::TestCase
 
     end
 
+    should "show" do
+
+
+    end
+
     should "fix" do
 
     end
