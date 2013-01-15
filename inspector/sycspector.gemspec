@@ -13,6 +13,6 @@ Gem::Specification.new do |s|
   s.required_ruby_version = '>=1.9'
   s.files        = Dir['**/**']
   s.executables  = ['sycspector']
-  s.test_files   = ["test/test*.rb"]
-  s.has_rdoc     = false
+  s.test_files   = Dir['test/test*.rb']
+  s.has_rdoc     = true
 end

@@ -1,13 +1,33 @@
 require_relative 'console'
 
+# This module encapsulates functionality related to scanning values for
+# patterns. If a line contains the pattern that line is added to valid files.
+# If the pattern is not found in the line the line is added to invalid files.
+# Lines can if requested to be fixed. The line is presented to the user and the
+# user can eather fix the value by typing the corrected value. Other
+# possibilities are to drop the line, scan the line or just considering the
+# line as valid so it is added to valid values.
 module Inspector
+
+  # The Separator scans the input file for a provided pattern and prints the
+  # results of the scan to the console.
   class Separator
+    # The prompt string is presented to the user when values are requested to
+    # be fixed. (v)alid will add the value to the valid values without testing
+    # against the pattern. (i)nvalid adds the value to the invalid values.
+    # (d)rop discards the value, (s)can scans the line to look for the pattern.
+    # (f)ix allows to type the corrected value.
     PROMPT_STRING =  "-> (v)alid (i)nvalid (d)rop (s)can (f)ix: " 
 
+    # Initializes the Separator and creating a Console object
     def initialize
       @console = Console.new
     end
 
+    # Prints the results of the invokation of Separator.process
+    #
+    # :call-seq:
+    #   print_statistics(opts)
     def print_statistics(opts)
       puts "-> statistics"
       puts "   ----------"
@@ -37,6 +57,14 @@ module Inspector
       end
     end
 
+    # Prompts the PROMPT_STRING and tests the value against the pattern
+    #
+    # :call-seq:
+    #   fix(value, pattern) -> hash
+    #
+    # Return a hash with :value and :answer where :value contains the fixed
+    # value and the answer. To test whether the value is valid or invalid the
+    # :answer has to checked first.
     def fix(value, pattern) 
       choice = value
       result = {}
@@ -68,6 +96,12 @@ module Inspector
       return result
     end
 
+    # Processes the scan of the lines of the file and add the values eather to
+    # the valid or invalid values. The result of the scan will be added to the
+    # opts.
+    #
+    # :call-seq:
+    #   process(opts)
     def process(opts) 
       valid_file = File.open(opts[:valid_file], opts[:mode])
       valid_values = []

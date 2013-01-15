@@ -3,6 +3,7 @@ require 'shoulda'
 require_relative '../lib/inspector/options'
 require_relative '../lib/inspector/pattern'
 
+# Test of the Options class
 class TestOptions < Test::Unit::TestCase
 
   context "specifying an inputfile that does not exist" do
@@ -27,6 +28,7 @@ class TestOptions < Test::Unit::TestCase
 
   context "specifying an inputfile that exists" do
     
+    # Intializes the input, valid, invalid and history file
     def setup
       puts "in startup"
       File.open('existing', 'w') do |file|
@@ -53,6 +55,7 @@ class TestOptions < Test::Unit::TestCase
       end 
     end
 
+    # Cleans up the test directory by deleting the files created in setup
     def teardown
       puts "in shutdown"
       `rm existing`

@@ -1,0 +1,11 @@
+Tue, 15 Jan 2013 23:07:10 +0100
+./test/test_options.rb	Tue, 15 Jan 2013 23:04:15 +0100
+./test/test_separator.rb	Tue, 15 Jan 2013 23:02:11 +0100
+./test/test_console.rb	Tue, 15 Jan 2013 22:59:35 +0100
+./lib/inspector/separator.rb	Tue, 15 Jan 2013 22:52:16 +0100
+./lib/inspector/pattern.rb	Tue, 15 Jan 2013 22:28:07 +0100
+./lib/inspector/options.rb	Tue, 15 Jan 2013 23:07:06 +0100
+./lib/inspector/console.rb	Tue, 15 Jan 2013 22:54:55 +0100
+./lib/inspector/runner.rb	Tue, 15 Jan 2013 22:56:24 +0100
+./bin/sycspector	Tue, 15 Jan 2013 22:57:52 +0100
+./README	Tue, 15 Jan 2013 22:46:24 +0100

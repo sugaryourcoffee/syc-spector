@@ -1,14 +1,23 @@
 require 'io/wait'
 
+# Module Inspector contains functions related to the Console that is helpers
+# for user input
 module Inspector
   
+  # Console provides functions for user input
   class Console
     
+    # Listens on Ctrl-C and exits the application
     Signal.trap("INT") do
       puts "-> program terminated by user"
       exit
     end
 
+    # Listens for key presses and returns the pressed key without pressing
+    # return
+    #
+    # :call-seq:
+    #   char_if_pressed
     def char_if_pressed
       begin
         system("stty raw -echo")
@@ -22,6 +31,13 @@ module Inspector
       end
     end
 
+    # Prompts the user for input.
+    #
+    # :call-seq:
+    #   prompt(choice_line) -> char
+    #
+    # choice_line is the prompt string. If the prompt string contains a (x)
+    # sequence x is a valid choice the is relized when pressed and returned.
     def prompt(choice_line)
       pattern = /(?<=\()./
       choices = choice_line.scan(pattern)

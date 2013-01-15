@@ -2,6 +2,7 @@ require 'test/unit'
 require 'shoulda'
 require_relative '../lib/inspector/console'
 
+# Tests the Console class
 class TestConsole < Test::Unit::TestCase
 
   context "console" do

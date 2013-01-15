@@ -1,5 +1,7 @@
 #!/usr/bin/env ruby
 require 'inspector/runner'
 
+# Creates a new Runner object and providing the command line arguments
 runner = Inspector::Runner.new(ARGV)
+# Runs the application
 runner.run

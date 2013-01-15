@@ -2,12 +2,15 @@ require 'test/unit'
 require 'shoulda'
 require_relative '../lib/inspector/separator'
 
+# Tests the Separator class
 class TestSeparator < Test::Unit::TestCase
 
+  # Options used for invoking the Separator
   @options = {}
 
   context "Process" do
     
+    # Initialize the @options
     def setup
       @options = {individualize: false, sort: false, fix: false, mode: 'w',
                  pattern: /\A\w+@\w+\.de\Z/, scan_pattern: /\w+@\w+\.de/, 
@@ -16,6 +19,8 @@ class TestSeparator < Test::Unit::TestCase
                  invalid_file: "20130113_121212_invalid_values", show: :valid}
     end
 
+    # Initilize the infile with provided values and separating the values with
+    # the provided separator
     def initialize_infile(values = [], separator)
       File.open(@options[:infile], 'w') do |file|
         first = true
@@ -30,6 +35,7 @@ class TestSeparator < Test::Unit::TestCase
       end
     end
 
+    # Overrides some of the standard @optinons initialized in setup
     def initialize_options(opts={})
       opts.each do |key, value|
         @options[key] = value

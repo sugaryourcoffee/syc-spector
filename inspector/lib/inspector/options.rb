@@ -3,15 +3,27 @@ require 'io/wait'
 
 require_relative 'pattern.rb'
 
+# Module Inspector contains the functions related to the command line parsing.
+# Provides the parsed user input in the options hash.
 module Inspector
 
+  # Parses the provided command line flags, switches and arguments
   class Options
+    # Options hold all the parameters used by the application
     attr_reader :options
 
+    # Initializes Options and parses the provided user input from the command
+    # line
     def initialize(argv)
       parse(argv)
     end
 
+    # After running the application output files are saved in the history.
+    # --get_file_from_history-- retrieves the valid or invalid file from the
+    # last application invokation. Where type is eather +valid+ or +invalid+.
+    #
+    # :call-seq:
+    #   get_file_from_history(type)
     def get_file_from_history(type)
       pattern = Regexp.new('_'+type.to_s)
       File.open(".sycspector.data", 'r') do |file|
@@ -21,6 +33,8 @@ module Inspector
       end
     end
 
+    # Save the results of the last run of the application to +.sycspector.data+.
+    # It contains the valid and invalid file as well as the pattern.
     def save_result_files(opts)
       File.open(".sycspector.data", 'w') do |file|
         file.puts opts[:valid_file]
@@ -32,6 +46,11 @@ module Inspector
 
   private
 
+    # Creates the output files valid and invalid files based on the input file's
+    # name. If the filename already exists it is copied with a new timestamp.
+    # 
+    # :call-seq:
+    #   create_output_files(filename)
     def create_output_files(filename)
       timestamp = Time.now.strftime("%Y%m%d-%H%M%S")
       if filename =~ /\d{8}-\d{6}/
@@ -42,6 +61,10 @@ module Inspector
                invalid_file: "#{timestamp}_invalid_#{filename}"}
     end
  
+    # Parses the provided arguments and stores the value in @options
+    #
+    # :call-seq:
+    #   parse(argv)
     def parse(argv)
       @options = {}
       OptionParser.new do |opts|
