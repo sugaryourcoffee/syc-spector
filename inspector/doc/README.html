@@ -85,6 +85,12 @@
 
 <div id="documentation" class="description">
   
+<h1 id="label-syc-spector+-+Dokumentation">syc-spector - Dokumentation</h1>
+
+<pre>home :: https://github.com/sugaryourcoffee/syc-spector</pre>
+
+<h2 id="label-Description">Description</h2>
+
 <p>The sycspector scans a file for patterns provided on the command line.
 Lines that match the pattern are saved to a valid file and those lines that
 don’t match the pattern are added to an invalid file. The valid and invalid
@@ -92,20 +98,58 @@ files as well as the used pattern are stored in a history file. The saved
 values are used for a subsequent call to sycspector with –show and -f for
 fix.</p>
 
-<p>Invokation Examples</p>
+<h2 id="label-Invokation+Examples">Invokation Examples</h2>
 
-<pre>sycspector mail_addresses -p email</pre>
+<p>Rearches for email addresses in the provided file ‘email_addresses’</p>
 
-<p>searches for email addresses in the provided file ‘email_addresses’</p>
+<pre>$ sycspector email_addresses -p email</pre>
 
 <p>Lines that are not recognized can be prompted, fixed and appended to the
 valid file with</p>
 
-<pre>sycspector -fa</pre>
+<pre>$ sycspector -fa</pre>
 
 <p>To show the result of the invokation use</p>
 
-<pre>sycspector --show</pre>
+<pre>$ sycspector --show</pre>
+
+<p>To fix the values from the input file at the first scan</p>
+
+<pre>$ sycspector -f email-addresses -p email</pre>
+
+<p>To sort the values</p>
+
+<pre>$ sycspector -s email-addresses -p email</pre>
+
+<p>To fix, sort and remove duplicates (individualize)</p>
+
+<pre>$ sycspector -fsi email-addresses -p email</pre>
+
+<p>Matching patterns like ‘name, firstname’</p>
+
+<pre>$ syscpector name -p &quot;\w+, \w+&quot;</pre>
+
+<p>Scanning only whole lines use</p>
+
+<pre>$ sycspector name -p &quot;\A\w+, \w+\A&quot;</pre>
+
+<p>If the file contains lines like “Doe, John and Doe, Jane” these won’t be
+saved at the first scan but can be scanned with the –fix switch and
+appended to the valid values from the last run</p>
+
+<pre>$ sycspector -fa</pre>
+
+<p>Fixing a specific file by specifying the invalid file as inputfile</p>
+
+<pre>$ sycspector -fa 2013016-083346_invalid_name -o 2013016-083346_valid_name</pre>
+
+<p>Specifying the file where the results (valid and invalid) should go to</p>
+
+<pre>$ sycspector -fa -o outputfile</pre>
+
+<p>To process all at once</p>
+
+<pre>$ sycspector -fis inputfile -o outputfile -p &quot;\A\w+, w+\Z&quot; --show</pre>
 
 </div>
 

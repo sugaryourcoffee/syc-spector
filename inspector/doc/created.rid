@@ -1,4 +1,4 @@
-Tue, 15 Jan 2013 23:07:10 +0100
+Wed, 16 Jan 2013 08:34:21 +0100
 ./test/test_options.rb	Tue, 15 Jan 2013 23:04:15 +0100
 ./test/test_separator.rb	Tue, 15 Jan 2013 23:02:11 +0100
 ./test/test_console.rb	Tue, 15 Jan 2013 22:59:35 +0100
@@ -8,4 +8,4 @@ Tue, 15 Jan 2013 23:07:10 +0100
 ./lib/inspector/console.rb	Tue, 15 Jan 2013 22:54:55 +0100
 ./lib/inspector/runner.rb	Tue, 15 Jan 2013 22:56:24 +0100
 ./bin/sycspector	Tue, 15 Jan 2013 22:57:52 +0100
-./README	Tue, 15 Jan 2013 22:46:24 +0100
+./README	Wed, 16 Jan 2013 08:34:09 +0100

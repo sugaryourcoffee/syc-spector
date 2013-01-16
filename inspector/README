@@ -1,17 +1,48 @@
-# The sycspector scans a file for patterns provided on the command line.
-# Lines that match the pattern are saved to a valid file and those lines that
-# don't match the pattern are added to an invalid file.
-# The valid and invalid files as well as the used pattern are stored in a
-# history file. The saved values are used for a subsequent call to sycspector
-# with --show and -f for fix.
-#
-# Invokation Examples
-#   sycspector mail_addresses -p email
-# searches for email addresses in the provided file 'email_addresses'
-#
-# Lines that are not recognized can be prompted, fixed and appended to the
-# valid file with
-#   sycspector -fa
-#
-# To show the result of the invokation use
-#   sycspector --show
+= \syc-spector - Dokumentation
+ home :: https://github.com/sugaryourcoffee/syc-spector
+
+== Description
+The sycspector scans a file for patterns provided on the command line.
+Lines that match the pattern are saved to a valid file and those lines that
+don't match the pattern are added to an invalid file.
+The valid and invalid files as well as the used pattern are stored in a
+history file. The saved values are used for a subsequent call to sycspector
+with --show and -f for fix.
+
+== Invokation Examples
+Rearches for email addresses in the provided file 'email_addresses'
+  $ sycspector email_addresses -p email
+
+Lines that are not recognized can be prompted, fixed and appended to the
+valid file with
+  $ sycspector -fa
+
+To show the result of the invokation use
+  $ sycspector --show
+
+To fix the values from the input file at the first scan
+  $ sycspector -f email-addresses -p email
+
+To sort the values
+  $ sycspector -s email-addresses -p email
+
+To fix, sort and remove duplicates (individualize)
+  $ sycspector -fsi email-addresses -p email
+
+Matching patterns like 'name, firstname'
+  $ syscpector name -p "\w+, \w+"
+
+Scanning only whole lines use
+  $ sycspector name -p "\A\w+, \w+\A"
+
+If the file contains lines like "Doe, John and Doe, Jane" these won't be saved at the first scan but can be scanned with the --fix switch and appended to the valid values from the last run
+  $ sycspector -fa
+
+Fixing a specific file by specifying the invalid file as inputfile
+  $ sycspector -fa 2013016-083346_invalid_name -o 2013016-083346_valid_name
+
+Specifying the file where the results (valid and invalid) should go to
+  $ sycspector -fa -o outputfile
+
+To process all at once
+  $ sycspector -fis inputfile -o outputfile -p "\A\w+, w+\Z" --show
