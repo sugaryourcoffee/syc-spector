@@ -1,13 +1,16 @@
-= \syc-spector - Dokumentation
+= Welcome to syc-spector
  home :: https://github.com/sugaryourcoffee/syc-spector
 
 == Description
 The sycspector scans a file for patterns provided on the command line.
-Lines that match the pattern are saved to a valid file and those lines that
-don't match the pattern are added to an invalid file.
+Lines that match the pattern are saved to a file with valid values and those lines that don't match the pattern are added to a file with invalid values.
 The valid and invalid files as well as the used pattern are stored in a
 history file. The saved values are used for a subsequent call to sycspector
-with --show and -f for fix.
+with --show and -f for fix to show the results or to prompt the invalid values to fix them. Fixed values can appended to the valid values file.
+
+== Installation
+sycspector can be installed as a gem from [RubyGems](http://RubyGems.org) with
+  $ gem install syc-spector
 
 == Invokation Examples
 Rearches for email addresses in the provided file 'email_addresses'
@@ -46,3 +49,6 @@ Specifying the file where the results (valid and invalid) should go to
 
 To process all at once
   $ sycspector -fis inputfile -o outputfile -p "\A\w+, w+\Z" --show
+
+== License
+syc-spector is released under the {MIT License}[http://www.opensource.org/license/MIT].

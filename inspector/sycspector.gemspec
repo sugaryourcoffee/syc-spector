@@ -5,7 +5,7 @@ Gem::Specification.new do |s|
      Allow to sort, remove double and manually fix values."
   s.description  = File.read(File.join(File.dirname(__FILE__), 'README'))
   s.requirements = ['No requirements']
-  s.version      = "0.0.1"
+  s.version      = "0.0.2"
   s.author       = "Pierre Sugar"
   s.email        = "pierre@sugaryourcoffee.de"
   s.homepage     = "http://syc.dyndns.org/drupal"
