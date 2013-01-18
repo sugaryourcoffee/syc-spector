@@ -145,7 +145,7 @@ module Inspector
       valid_counter = valid_values.size
 
       valid_values.uniq! {|value| value.downcase } if opts[:individualize]
-      valid_values.sort! {|value| value.downcase } if opts[:sort]
+      valid_values.sort! {|a,b| a.downcase <=> b.downcase } if opts[:sort]
 
       valid_values.each do |value|
           valid_file.puts value
