@@ -98,9 +98,6 @@ module Inspector
         
         # Create a flag
 
-        @options[:pattern] = /\A.*\Z/
-        @options[:scan_pattern] = /\A.*\Z/
-
         opts.on("-p", "--pattern PATTERN",
                 "Values that match the pattern are",
                 "considered as valid values.",
@@ -165,8 +162,10 @@ module Inspector
             File.open(".sycspector.data", 'r') do |file|
               files = create_output_files file.gets.chomp            
               argv << file.gets.chomp
-              @options[:pattern] = Regexp.new(file.gets.chomp)
-              @options[:scan_pattern] = Regexp.new(file.gets.chomp)
+              unless @options[:pattern]
+                @options[:pattern] = Regexp.new(file.gets.chomp)
+                @options[:scan_pattern] = Regexp.new(file.gets.chomp)
+              end
             end
           else
             STDERR.puts "--> no sycspector history.\n" +
@@ -204,6 +203,11 @@ module Inspector
             files = create_output_files "values"
             @options[:valid_file] = files[:valid_file]
             @options[:invalid_file] = files[:invalid_file]
+          end
+
+          unless @options[:pattern]
+            @options[:pattern] = DEFAULT_PATTERN
+            @options[:scan_pattern] = DEFAULT_PATTERN
           end
         end
       end
