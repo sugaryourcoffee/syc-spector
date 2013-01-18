@@ -30,7 +30,6 @@ class TestOptions < Test::Unit::TestCase
     
     # Intializes the input, valid, invalid and history file
     def setup
-      puts "in startup"
       File.open('existing', 'w') do |file|
         file.puts "pierre@thesugars.de"
         file.puts "amanda@thesugars.de und pierre@thesugars.de"
@@ -38,11 +37,11 @@ class TestOptions < Test::Unit::TestCase
       File.open('.sycspector.data', 'w') do |file|
         file.puts "20130113-121212_valid_values"
         file.puts "20130113-121212_invalid_values"
-        file.puts "(?-mix:\A[\w!#\$%&'*+\/=?`{|}~^-]+" +
-                  "(?:\.[\w!#\$%&'*+\/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+" +
-                  "[a-zA-Z]{2,6}\Z)"
-        file.puts "(?-mix:[\w!#\$%&'*+\/=?`{|}~^-]+" +
-                  "(?:\.[\w!#\$%&'*+\/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\.)+" +
+        file.puts "(?-mix:\\A[\\w!#\\$%&'*+\/=?`{|}~^-]+" +
+                  "(?:\\.[\\w!#\\$%&'*+\/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+" +
+                  "[a-zA-Z]{2,6}\\Z)"
+        file.puts "(?-mix:[\\w!#\\$%&'*+\/=?`{|}~^-]+" +
+                  "(?:\\.[\\w!#\\$%&'*+\/=?`{|}~^-]+)*@(?:[a-zA-Z0-9-]+\\.)+" +
                   "[a-zA-Z]{2,6})"
       end
       File.open('20130113-121212_valid_values', 'w') do |file|
@@ -57,15 +56,16 @@ class TestOptions < Test::Unit::TestCase
 
     # Cleans up the test directory by deleting the files created in setup
     def teardown
-      puts "in shutdown"
       `rm existing`
       `rm 20130113-*`
       `rm .sycspector.data`
     end
  
-    should "return inputfile" do
+    should "return inputfile and default pattern" do
       opts = Inspector::Options.new(["existing"])
       assert_equal "existing", opts.options[:infile]
+      assert_equal DEFAULT_PATTERN, opts.options[:pattern]
+      assert_equal DEFAULT_PATTERN, opts.options[:scan_pattern]
     end
 
     should "return email pattern" do
@@ -104,12 +104,29 @@ class TestOptions < Test::Unit::TestCase
       assert_equal nil, opts.options[:infile]
     end
 
-    should "return fix and invalid file as input file from last invokation" do
+    should "return fix and invalid file as input file and pattern "+ 
+           "from last invokation" do
       opts = Inspector::Options.new(["-f"])
       assert_equal true, opts.options[:fix]
       assert_equal "20130113-121212_invalid_values", opts.options[:infile]
+
+      pattern_match = 
+        "a@b.c".match(EMAIL_PATTERN).to_s == 
+        "a@b.c".match(opts.options[:pattern]).to_s
+      scan_pattern_match = 
+        "is a@b.c here?".match(ANY_EMAIL_PATTERN).to_s == 
+        "is a@b.c here?".match(opts.options[:scan_pattern]).to_s
+
+      assert_equal true, pattern_match
+      assert_equal true, scan_pattern_match
     end
 
+    should "return fix and provided pattern and scan_pattern" do
+      opts = Inspector::Options.new(["-f", "-p", "\\A\\w+@\\w+\\.\\w+\\Z"])
+      assert_equal true, opts.options[:fix]
+      assert_equal /\A\w+@\w+\.\w+\Z/, opts.options[:pattern]
+      assert_equal /\w+@\w+\.\w+/, opts.options[:scan_pattern]
+    end
   end
 
 end
